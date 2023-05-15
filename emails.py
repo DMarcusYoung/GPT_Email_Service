@@ -10,11 +10,12 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from bs4 import BeautifulSoup
 
+from gpt import emailSummary
+
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
-
-def main():
+def getLastEmail(n=0):
     """Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
     """
@@ -45,7 +46,7 @@ def main():
         if not messages:
             print('No messages found.')
             return
-        message = service.users().messages().get(userId='me', id=messages[1]['id']).execute()
+        message = service.users().messages().get(userId='me', id=messages[n]['id']).execute()
         payload = message['payload']
         headers = payload['headers']
 
@@ -63,7 +64,7 @@ def main():
         parts = payload.get('parts')
         if not parts:
             print('No Message found.')
-            return
+            return [None, None, None]
         parts = parts[0]
         data = parts['body']['data']
         data = data.replace("-","+").replace("_","/")
@@ -76,15 +77,21 @@ def main():
         soup = BeautifulSoup(decoded_data , "lxml")
         body = soup.body()
 
-        # Printing the subject, sender's email and message
-        print("Subject: ", subject)
-        print("From: ", sender)
-        print("Message: ", body)
-        print('\n')
+        return [subject, sender, body]
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
         print(f'An error occurred: {error}')
 
-
+def main():
+    subject, sender, body = getLastEmail(9)
+    if not subject:
+        print("No email found")
+        return
+    # Printing the subject, sender's email and message
+    print("Subject: ", subject)
+    print("From: ", sender)
+    print("Message: ", body)
+    print('\n')
+    emailSummary([subject, sender, body])
 if __name__ == '__main__':
     main()
