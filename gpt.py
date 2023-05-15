@@ -1,8 +1,12 @@
 import openai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def emailSummary(email):
     subject, sender, body = email
-    openai.api_key = "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"
+    openai.api_key = os.environ.get("OPENAI_API_KEY")
     res = openai.ChatCompletion.create(
         # model="gpt-4",
         model="gpt-3.5-turbo",

@@ -15,6 +15,7 @@ from gpt import emailSummary
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
+
 def getLastEmail(n=0):
     """Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
