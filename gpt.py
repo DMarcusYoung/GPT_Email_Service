@@ -4,17 +4,34 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def emailSummary(email):
-    subject, sender, body = email
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
-    res = openai.ChatCompletion.create(
-        # model="gpt-4",
+def emailSummary(emails):
+    summaries = []
+    for e in emails:
+        subject, sender, body = e
+        if not subject:
+            print('No Message found.')
+            summaries.append(None)
+            continue
+        openai.api_key = os.environ.get("OPENAI_API_KEY")
+        summary = openai.ChatCompletion.create(
+            # model="gpt-4",
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Summarize this email for me: " + str(body)},
+            ]
+        )
+        print(summary)
+        summaries.append(summary)
+
+        
+    rank = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": "Summarize this email for me: " + str(body)},
+            {"role": "user", "content": "Rank those emails by importance:" + str(summaries)},
         ]
     )
-    print(res)
+    print(rank)
 
-# emailSummary("Hello, I am a Nigerian prince. I have $1")
+    return summaries

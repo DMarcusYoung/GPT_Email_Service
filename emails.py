@@ -16,7 +16,7 @@ from gpt import emailSummary
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 
-def getLastEmail(n=0):
+def getLastEmail(n=5):
     """Shows basic usage of the Gmail API.
     Lists the user's Gmail labels.
     """
@@ -44,55 +44,55 @@ def getLastEmail(n=0):
         results = service.users().messages().list(userId='me').execute()
         messages = results.get('messages', [])
 
+        emails = []
         if not messages:
             print('No messages found.')
             return
-        message = service.users().messages().get(userId='me', id=messages[n]['id']).execute()
-        payload = message['payload']
-        headers = payload['headers']
+        for i in range(n):
+            message = service.users().messages().get(userId='me', id=messages[i]['id']).execute()
+            payload = message['payload']
+            headers = payload['headers']
 
-        subject = ''
-        sender = ''
-        for d in headers:
-            if d['name'] == 'Subject':
-                subject = d['value']
-            if d['name'] == 'From':
-                sender = d['value']
-  
-        # The Body of the message is in Encrypted format. So, we have to decode it.
-        # Get the data and decode it with base 64 decoder.
-        
-        parts = payload.get('parts')
-        if not parts:
-            print('No Message found.')
-            return [None, None, None]
-        parts = parts[0]
-        data = parts['body']['data']
-        data = data.replace("-","+").replace("_","/")
-        decoded_data = base64.b64decode(data)
+            subject = ''
+            sender = ''
+            for d in headers:
+                if d['name'] == 'Subject':
+                    subject = d['value']
+                if d['name'] == 'From':
+                    sender = d['value']
+    
+            # The Body of the message is in Encrypted format. So, we have to decode it.
+            # Get the data and decode it with base 64 decoder.
+            
+            parts = payload.get('parts')
+            if not parts:
+                print('No Message found.')
+                emails.append([None, None, None])
+                continue
+            parts = parts[0]
+            data = parts['body']['data']
+            data = data.replace("-","+").replace("_","/")
+            decoded_data = base64.b64decode(data)
 
-        # Now, the data obtained is in lxml. So, we will parse 
-        # it with BeautifulSoup library
-        # print(decoded_data)
-        # soup = BeautifulSoup(decoded_data, features="html.parser")
-        soup = BeautifulSoup(decoded_data , "lxml")
-        body = soup.body()
+            # Now, the data obtained is in lxml. So, we will parse 
+            # it with BeautifulSoup library
+            # print(decoded_data)
+            # soup = BeautifulSoup(decoded_data, features="html.parser")
+            soup = BeautifulSoup(decoded_data , "lxml")
+            body = soup.body()
 
-        return [subject, sender, body]
+            emails.append([subject, sender, body])
+
+        return emails
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
         print(f'An error occurred: {error}')
 
 def main():
-    subject, sender, body = getLastEmail(9)
-    if not subject:
-        print("No email found")
-        return
-    # Printing the subject, sender's email and message
-    print("Subject: ", subject)
-    print("From: ", sender)
-    print("Message: ", body)
-    print('\n')
-    emailSummary([subject, sender, body])
+    emails = getLastEmail(2)
+
+    summaries = emailSummary(emails)
+    print(summaries)
+
 if __name__ == '__main__':
     main()
